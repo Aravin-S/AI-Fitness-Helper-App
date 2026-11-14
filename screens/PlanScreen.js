@@ -5,6 +5,7 @@ import { Alert, Platform, ScrollView, StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { applyTemplate, getPlan } from "../storage/storage"
 import { DAY_NAMES, WEEK_ORDER, isRest } from "../utils/days"
+import { syncReminders } from "../utils/notifications"
 import { TEMPLATES } from "../utils/templates"
 
 const confirm = (title, message, onConfirm) => {
@@ -32,6 +33,7 @@ export default function PlanScreen() {
 	const useTemplate = (template) =>
 		confirm("Use template?", `This replaces your current plan with "${template.name}".`, async () => {
 			setPlan(await applyTemplate(template))
+			syncReminders().catch(() => {})
 		})
 
 	return (

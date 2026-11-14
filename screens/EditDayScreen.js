@@ -5,6 +5,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from "re
 import { SafeAreaView } from "react-native-safe-area-context"
 import { getPlan, newId, saveDay } from "../storage/storage"
 import { DAY_NAMES, LABEL_OPTIONS, REST_LABEL } from "../utils/days"
+import { syncReminders } from "../utils/notifications"
 
 export default function EditDayScreen({ route }) {
 	const { dayIndex } = route.params
@@ -32,6 +33,7 @@ export default function EditDayScreen({ route }) {
 			.filter((e) => e.name.trim())
 			.map((e) => ({ id: e.id, name: e.name.trim(), sets: parseInt(e.sets, 10) || 1, reps: e.reps.trim() || "10" }))
 		await saveDay(dayIndex, { label: label.trim() || REST_LABEL, exercises: cleaned })
+		await syncReminders().catch(() => {})
 		navigation.goBack()
 	}
 

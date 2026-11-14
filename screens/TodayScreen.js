@@ -1,19 +1,25 @@
-import { useFocusEffect } from "@react-navigation/native"
-import { Card, Divider, Text } from "@ui-kitten/components"
+import { useFocusEffect, useNavigation } from "@react-navigation/native"
+import { Button, Card, Divider, Text } from "@ui-kitten/components"
 import React, { useCallback, useState } from "react"
 import { ScrollView, StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { getPlan } from "../storage/storage"
+import { dateKey, getLogs, getPlan } from "../storage/storage"
 import { DAY_NAMES, isRest } from "../utils/days"
 
 export default function TodayScreen() {
 	const [ plan, setPlan ] = useState(null)
+	const [ doneToday, setDoneToday ] = useState(false)
+	const navigation = useNavigation()
 	const dayIndex = new Date().getDay()
 
 	useFocusEffect(
 		useCallback(() => {
 			let active = true
-			getPlan().then((p) => active && setPlan(p))
+			Promise.all([ getPlan(), getLogs() ]).then(([ p, logs ]) => {
+				if (!active) return
+				setPlan(p)
+				setDoneToday(logs.some((l) => l.date === dateKey()))
+			})
 			return () => {
 				active = false
 			}
@@ -53,6 +59,10 @@ export default function TodayScreen() {
 								))}
 							</Card>
 						)}
+						{doneToday && <Text status="success" style={styles.title}>Workout logged today ✓</Text>}
+						<Button style={styles.title} onPress={() => navigation.navigate("LogWorkout", { dayIndex })}>
+							{doneToday ? "Log another workout" : "Start workout"}
+						</Button>
 					</View>
 				)}
 			</ScrollView>

@@ -57,3 +57,55 @@ export async function applyTemplate(template) {
 	}
 	return savePlan(plan)
 }
+
+// ---------- Reminder settings ----------
+const SETTINGS_KEY = "SETTINGS"
+export const DEFAULT_SETTINGS = { reminderEnabled: false, hour: 7, minute: 30 }
+
+export async function getSettings() {
+	try {
+		const value = await AsyncStorage.getItem(SETTINGS_KEY)
+		return { ...DEFAULT_SETTINGS, ...(value ? JSON.parse(value) : {}) }
+	} catch (e) {
+		return { ...DEFAULT_SETTINGS }
+	}
+}
+
+export async function saveSettings(settings) {
+	const merged = { ...DEFAULT_SETTINGS, ...settings }
+	await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(merged))
+	return merged
+}
+
+// ---------- Workout logs ----------
+// { id, date: "YYYY-MM-DD", dayLabel, entries: [{ exercise, sets: [{ reps, weight }] }], notes }
+const LOGS_KEY = "WORKOUT_LOGS"
+
+export const dateKey = (d = new Date()) => {
+	const pad = (n) => String(n).padStart(2, "0")
+	return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+// Newest first
+export async function getLogs() {
+	try {
+		const value = await AsyncStorage.getItem(LOGS_KEY)
+		const logs = value ? JSON.parse(value) : []
+		return Array.isArray(logs) ? logs.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0)) : []
+	} catch (e) {
+		return []
+	}
+}
+
+export async function addLog(log) {
+	const logs = await getLogs()
+	const entry = { ...log, id: newId(), date: log.date || dateKey() }
+	logs.push(entry)
+	await AsyncStorage.setItem(LOGS_KEY, JSON.stringify(logs))
+	return entry
+}
+
+export async function deleteLog(id) {
+	const logs = (await getLogs()).filter((l) => l.id !== id)
+	await AsyncStorage.setItem(LOGS_KEY, JSON.stringify(logs))
+}
